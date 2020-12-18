@@ -33,10 +33,12 @@ def VAD(fn):
 		ed = int(a[1]*samplerate)
 		diff = (ed-st)
 		sound.extend( data[st:ed])
+		if(len(data[st:ed]) < diff ):
+			print("error",a[0],a[1])
 		Mod_t.append([prev,prev + diff, a[2]])
 		prev = prev + diff
 		# print([prev/samplerate,(prev + diff)/samplerate, a[2]])
-
+	print("total_VADtime",prev/samplerate, len(sound)/samplerate,data.shape,data.shape[0]/samplerate)
 	wavfile.write(fn+"_vad.wav", samplerate, np.array(sound) )
 	with open(fn+'_Mod.rttm','w') as fw:
 		for i in Mod_t:
@@ -67,7 +69,7 @@ def segment(segs):
 		newsegs.append([all_times[i-1],all_times[i], segments[i-1] ])
 	if(ln>4 and ln<6 ):
 		pass
-		print(segs,"\n-------------\n", newsegs)
+		# print(segs,"\n-------------\n", newsegs)
 	return newsegs
 
 			
@@ -79,10 +81,12 @@ def main(fn,ct):
 	ln = len(All_t)
 	temp = []
 	tend = All_t[0][1]
+	total_time = 0
 	for i in range(ln):
 		if(All_t[i][0]>=tend):
 			# print(temp,tend,"\n\n")
 			Act_t.extend(segment(temp))
+			total_time += (tend - temp[0][0])
 			temp = [All_t[i]]
 			tend = All_t[i][1]
 		else:
@@ -95,9 +99,9 @@ def main(fn,ct):
 			# print(" ** ",end=" ")
 		# print(All_t[i][0],All_t[i-1][1])
 	# Act_t.append([All_t[ln-1][0],All_t[ln-1][1] ,All_t[ln-1][2] ])
-	
+	print(total_time,"total_time")
 	VAD(pjoin("..","Data",fn,"audio",fn+".Mix-Headset"))
-	VAD(pjoin("..","Data",fn,"audio",fn+".Mix-Lapel"))
+	# VAD(pjoin("..","Data",fn,"audio",fn+".Mix-Lapel"))
 
 	# print(Act_t)
 
