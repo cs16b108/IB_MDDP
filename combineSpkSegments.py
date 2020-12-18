@@ -14,7 +14,7 @@ Mod_t = []
 def parse(i,fn):
 	global All_t
 	S = alls[i]	
-	tree = ET.parse('../ami_annotation/segments/EN2002b.'+S+'.segments.xml')
+	tree = ET.parse('../ami_annotation/segments/'+fn+"."+S+'.segments.xml')
 
 	root = tree.getroot()
 	for seg in root.findall('segment'):
@@ -38,7 +38,7 @@ def VAD(fn):
 		Mod_t.append([prev,prev + diff, a[2]])
 		prev = prev + diff
 		# print([prev/samplerate,(prev + diff)/samplerate, a[2]])
-	print("total_VADtime",prev/samplerate, len(sound)/samplerate,data.shape,data.shape[0]/samplerate)
+	print("total_VADtime",prev/samplerate, len(sound)/samplerate,data.shape,data.shape[0]/samplerate,samplerate)
 	wavfile.write(fn+"_vad.wav", samplerate, np.array(sound) )
 	with open(fn+'_Mod.rttm','w') as fw:
 		for i in Mod_t:
