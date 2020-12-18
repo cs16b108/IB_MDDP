@@ -40,23 +40,61 @@ def VAD(fn):
 	wavfile.write(fn+"_vad.wav", samplerate, np.array(sound) )
 	with open(fn+'_Mod.rttm','w') as fw:
 		for i in Mod_t:
-			fw.write("SPEAKER meeting 1 {0:0.3f} {1:0.3f} <NA> <NA> speaker_{2:d} <NA> <NA>\n".format(i[0]/samplerate,(i[1]-i[0])/samplerate,i[2]))
+			for j in i[2]:
+				fw.write("SPEAKER meeting 1 {0:0.3f} {1:0.3f} <NA> <NA> speaker_{2:d} <NA> <NA>\n".format(
+					i[0]/samplerate,
+					(i[1]-i[0])/samplerate,
+					j))
 	np.save(fn+'_Mod_Seg.npy',Mod_t)
 	print(fn+"_vad.wav")
+def segment(segs):
+	segs = np.array(segs)
+	ln  =  len(segs)
+	newsegs = []
+	all_times = np.append(segs[:,0],segs[:,1])
+	all_times = np.sort(all_times)
+	segments = [[] for i in range(len(all_times)) ]
+	for i in range(ln):
+		start_time = segs[i][0]
+		end_time = segs[i][1]
+		spk = int(segs[i][2])
+		sti = np.searchsorted(all_times,start_time)
+		edi = np.searchsorted(all_times,end_time)
+		for j in range(sti,edi):
+			segments[j].append(spk)
+	
+	for i in range(1, len(all_times)):
+		newsegs.append([all_times[i-1],all_times[i], segments[i-1] ])
+	if(ln>4 and ln<6 ):
+		pass
+		print(segs,"\n-------------\n", newsegs)
+	return newsegs
+
+			
 def main(fn,ct):
 	global All_t,Act_t,Mod_t
 	for i in range(ct):
 		parse(i,fn)
 	All_t.sort()
 	ln = len(All_t)
-	# temp = []
-	for i in range(1,ln):
-		Act_t.append([All_t[i-1][0],min(All_t[i][0],All_t[i-1][1] ) ,All_t[i-1][2] ])
+	temp = []
+	tend = All_t[0][1]
+	for i in range(ln):
+		if(All_t[i][0]>=tend):
+			# print(temp,tend,"\n\n")
+			Act_t.extend(segment(temp))
+			temp = [All_t[i]]
+			tend = All_t[i][1]
+		else:
+			temp.append(All_t[i])
+			tend = max(tend, All_t[i][1])
+		
+		# Act_t.append([All_t[i-1][0],min(All_t[i][0],All_t[i-1][1] ) ,All_t[i-1][2] ])
 		# print([All_t[i-1][0],min(All_t[i][0],All_t[i-1][1] ) ,All_t[i-1][2] ],end=" ")
 		# if(All_t[i][0] < All_t[i-1][1]):
 			# print(" ** ",end=" ")
 		# print(All_t[i][0],All_t[i-1][1])
-	Act_t.append([All_t[ln-1][0],All_t[ln-1][1] ,All_t[ln-1][2] ])
+	# Act_t.append([All_t[ln-1][0],All_t[ln-1][1] ,All_t[ln-1][2] ])
 	
 	VAD(pjoin("..","Data",fn,"audio",fn+".Mix-Headset"))
 	VAD(pjoin("..","Data",fn,"audio",fn+".Mix-Lapel"))
