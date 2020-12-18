@@ -35,9 +35,12 @@ def VAD(fn):
 		sound.extend( data[st:ed])
 		Mod_t.append([prev,prev + diff, a[2]])
 		prev = prev + diff
-		print([prev/samplerate,(prev + diff)/samplerate, a[2]])
+		# print([prev/samplerate,(prev + diff)/samplerate, a[2]])
 
 	wavfile.write(fn+"_vad.wav", samplerate, np.array(sound) )
+	with open(fn+'_Mod.rttm','w') as fw:
+		for i in Mod_t:
+			fw.write("SPEAKER meeting 1 {0:0.3f} {1:0.3f} <NA> <NA> speaker_{2:d} <NA> <NA>\n".format(i[0]/samplerate,(i[1]-i[0])/samplerate,i[2]))
 	np.save(fn+'_Mod_Seg.npy',Mod_t)
 	print(fn+"_vad.wav")
 def main(fn,ct):
@@ -45,8 +48,8 @@ def main(fn,ct):
 	for i in range(ct):
 		parse(i,fn)
 	All_t.sort()
-	print(All_t)
 	ln = len(All_t)
+	# temp = []
 	for i in range(1,ln):
 		Act_t.append([All_t[i-1][0],min(All_t[i][0],All_t[i-1][1] ) ,All_t[i-1][2] ])
 		# print([All_t[i-1][0],min(All_t[i][0],All_t[i-1][1] ) ,All_t[i-1][2] ],end=" ")
